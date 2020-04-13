@@ -22,15 +22,36 @@ class Course {
         }
     }
 
-    //Модель записывает данные в файл
-    async save(){
-        const course = await Course.getAll();
-        course.push(this.toJSON())
+    static async update(course) {
+        const courses = await Course.getAll();
+
+        const index = courses.findIndex(c => c.id === course.id)
+        courses[index] = course
 
         return new Promise((resolve, reject) => {
             fs.writeFile(
                 path.join(__dirname, '..', 'data', 'course.json'),
-                JSON.stringify(course),
+                JSON.stringify(courses),
+                (err) => {
+                    if(err) {
+                        reject(err)
+                    }else {
+                        resolve()
+                    }
+                }
+            )
+        })
+    }
+
+    //Модель записывает данные в файл
+    async save(){
+        const courses = await Course.getAll();
+        courses.push(this.toJSON())
+
+        return new Promise((resolve, reject) => {
+            fs.writeFile(
+                path.join(__dirname, '..', 'data', 'course.json'),
+                JSON.stringify(courses),
                 (err) => {
                     if(err) {
                         reject(err)

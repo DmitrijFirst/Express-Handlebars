@@ -5,6 +5,7 @@ const app = express();
 const homeRoutes = require('./routes/home')
 const addRoutes = require('./routes/add')
 const coursesRoutes = require('./routes/courses')
+const cardRoutes = require('./routes/card')
 //движок рендеринга html handlebars
 const hbs = exphds.create({
     defaultLayout: 'main',
@@ -16,12 +17,13 @@ app.set('view engine', 'hbs') // начинаем использование
 app.set('views' , 'views')// конфигурируем переменную view , указываем папку с html
 
 //Подключаем публичную папку с стилями, скриптами, img
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({extended: true})) //получаем дату формы 
 //регистрируем роуты, подключеные в папке routes
 app.use('/', homeRoutes);
 app.use('/add', addRoutes);
 app.use('/courses', coursesRoutes);
+app.use('/card', cardRoutes);
 
 
 
