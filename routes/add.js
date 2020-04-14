@@ -1,21 +1,27 @@
-const {Router} = require('express');
+const {Router} = require('express')
 const Course = require('../models/course')
-const router = Router();
+const router = Router()
 
-router.get('/', (req,res) => {
-    res.render('add', {
-        title: 'Добавить курсы', 
-        isAdd: true
-    })
+router.get('/', (req, res) => {
+  res.render('add', {
+    title: 'Добавить курс',
+    isAdd: true
+  })
 })
 
-//Обрабатываем post формы с страницы
-router.post('/', async (req,res) => {
-    const course = new Course(req.body.title, req.body.price, req.body.img );
+router.post('/', async (req, res) => {
+  const course = new Course({
+    title: req.body.title,
+    price: req.body.price,
+    img: req.body.img
+  })
 
-    course.save()
-
-    res.redirect('/courses');
+  try {
+    await course.save()
+    res.redirect('/courses')
+  } catch (e) {
+    console.log(e)
+  }
 })
 
-module.exports = router;
+module.exports = router
