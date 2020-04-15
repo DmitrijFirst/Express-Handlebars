@@ -1,3 +1,4 @@
+/*
 const path = require('path')
 const fs = require('fs')
 
@@ -77,4 +78,4 @@ class Card {
   }
 }
 
-module.exports = Card
+module.exports = Card*/
