@@ -1,8 +1,22 @@
 const {Router} = require('express')
 const bcrypt = require('bcryptjs')
+const crypto = require('crypto')
+const nodemailer = require('nodemailer')
 const User = require('../models/user')
 const router = Router()
+const keys = require('../keys')
+const resetEmail = require('../emails/reset')
+const reqEmail = require('../emails/registration')
 
+const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      user: keys.EMAIL_FROM,
+      pass: keys.PASS_EMAIL
+    }
+})
 
 router.get('/login', async (req,res) => {
     res.render('auth/login', {
@@ -70,10 +84,99 @@ router.post('/register', async (req,res) => {
             })
             await user.save();
             res.redirect('/auth/login#login')
+            await transporter.sendMail(reqEmail(email))
         }
     }catch (e){
         console.log(e)
     }
 })
 
+router.get('/reset', (req,res) => {
+    res.render('auth/reset', {
+        title: 'Восстановление пароля',
+        error: req.flash('error')
+    })
+})
+
+router.post('/reset', (req,res) => {
+    try{
+        //генерируем токен
+        crypto.randomBytes(32, async (err, buffer) => {
+            if(err) {
+                req.flash('error', 'Что-то пошло не так, повторите попытку позже')
+                return res.redirect('/auth/reset')
+            }
+            //Получаем сгенерированый токен
+            const token = buffer.toString('hex')
+            //Проверяем есть ли пользовтель с таким email
+            const candidate = await User.findOne({email: req.body.email})
+            //
+            if(candidate){
+                candidate.resetToken = token;
+                candidate.resetTokenExp = Date.now() + 60 * 60 * 1000 //задаем время жизни токена
+                await candidate.save();
+                await transporter.sendMail(resetEmail(candidate.email, token))
+                res.redirect('/auth/login')
+            }else {
+                req.flash('error', 'Такого email нет')
+                res.redirect('/auth/reset')
+            }
+        })
+    }catch (e) {
+        console.log(e)
+    }
+})
+
+router.get('/password/:token', async (req, res) => {
+    if (!req.params.token) {
+      return res.redirect('/auth/login')
+    }
+  
+    try {
+      const user = await User.findOne({
+        resetToken: req.params.token,
+        resetTokenExp: {$gt: Date.now()}
+      })
+  
+      if (!user) {
+        return res.redirect('/auth/login')
+      } else {
+        res.render('auth/password', {
+          title: 'Восстановить доступ',
+          error: req.flash('error'),
+          userId: user._id.toString(),
+          token: req.params.token
+        })
+      }
+    } catch (e) {
+      console.log(e)
+    }
+    
+  })
+
+router.post('/password', async (req, res) => {
+    try{
+        const user = await User.findOne({
+            _id: req.body.userId,
+            resetToken: req.body.token,
+            resetTokenExp: {$gt: Date.now()}
+
+        })
+
+        if(user){
+            user.password = await bcrypt.hash(req.body.password, 10)
+            user.resetToken = undefined;
+            user.resetTokenExp = undefined;
+            await user.save();
+            res.redirect('/auth/login')
+
+        }else{
+            res.flash('loginError', 'Время жизни ссылки истекло')
+            res.redirect('/auth/login')
+        }
+
+    }catch (e) {
+        console.log(e)
+    }
+})
 module.exports = router

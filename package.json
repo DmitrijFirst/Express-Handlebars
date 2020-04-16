@@ -19,6 +19,7 @@
     "express-handlebars": "^4.0.3",
     "express-session": "^1.17.0",
     "mongoose": "^5.5.3",
+    "nodemailer": "^6.4.6",
     "uuid": "^7.0.3"
   },
   "devDependencies": {
