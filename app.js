@@ -1,6 +1,8 @@
 const express = require('express')
 const path = require('path')
 const mongoose = require('mongoose')
+const csrf = require('csurf')
+const flash = require('connect-flash')
 const session = require('express-session')
 const MongoStore = require('connect-mongodb-session')(session)
 const exphbs = require('express-handlebars')
@@ -8,7 +10,7 @@ const homeRoutes = require('./routes/home')
 const cardRoutes = require('./routes/card')
 const addRoutes = require('./routes/add')
 const coursesRoutes = require('./routes/courses')
-const User = require('./models/user')
+//const User = require('./models/user')
 const ordersRoutes = require('./routes/orders')
 const authRoutes = require('./routes/auth')
 const {allowInsecurePrototypeAccess} = require('@handlebars/allow-prototype-access')
@@ -47,6 +49,8 @@ app.use(session({
   store
 }))
 
+app.use(csrf())
+app.use(flash())
 app.use(varMiddleware)
 app.use(userMiddleware)
 
